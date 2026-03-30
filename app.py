@@ -1,24 +1,23 @@
 import streamlit as st
 import numpy as np
-import cv2
 from PIL import Image
 import gdown
 import os
-
+ 
 # Page Config MUST BE FIRST
 st.set_page_config(
     page_title="DR Vision | Diabetic Retinopathy Detector",
     page_icon="👁",
     layout="centered"
 )
-
+ 
 # Download Model from Google Drive
 MODEL_PATH = 'dr_model.tflite'
 if not os.path.exists(MODEL_PATH):
     st.info("Downloading model... please wait!")
     url = 'https://drive.google.com/uc?id=1TpfFbxy0UFbHdAiuNODYqv9KrCk9xCZw'
     gdown.download(url, MODEL_PATH, quiet=False)
-
+ 
 # Custom CSS
 st.markdown("""
 <style>
@@ -140,7 +139,7 @@ html, body, [class*="css"] {
 #MainMenu, footer, header { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
-
+ 
 # Grade Info
 grade_info = {
     0: ("No DR",            "OK",     "Healthy eye. No signs of diabetic retinopathy detected.",        "#06d6a0"),
@@ -149,7 +148,7 @@ grade_info = {
     3: ("Severe DR",        "SEV",    "Severe damage detected. Urgent medical attention is needed.",     "#ef476f"),
     4: ("Proliferative DR", "URGENT", "Most severe stage. Immediate specialist intervention required.",  "#9d4edd"),
 }
-
+ 
 # Hero
 st.markdown("""
 <div class="hero">
@@ -159,7 +158,7 @@ st.markdown("""
     <div class="hero-sub">Upload a fundus eye image to instantly detect Diabetic Retinopathy severity using deep learning.</div>
 </div>
 """, unsafe_allow_html=True)
-
+ 
 # Load TFLite Model
 @st.cache_resource
 def load_model():
@@ -171,46 +170,45 @@ def load_model():
         interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
     interpreter.allocate_tensors()
     return interpreter
-
+ 
 interpreter = load_model()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 st.success("Model ready - Upload an image to begin analysis")
-
-# Preprocess
+ 
+# Preprocess — using Pillow only, no cv2
 def preprocess_image(image):
-    img = np.array(image)
-    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    img = cv2.resize(img, (224, 224))
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = image.convert("RGB")
+    img = img.resize((224, 224))
+    img = np.array(img).astype(np.float32)
     img = img / 255.0
-    return img.astype(np.float32)
-
+    return img
+ 
 # Upload Section
 st.markdown('<div class="upload-card">', unsafe_allow_html=True)
 uploaded_file = st.file_uploader("Drop your fundus eye image here", type=["jpg","jpeg","png"])
 st.markdown('</div>', unsafe_allow_html=True)
-
+ 
 # Analysis
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
     col1, col2, col3 = st.columns([1,3,1])
     with col2:
         st.image(image, caption="Uploaded Fundus Image", use_column_width=True)
-
+ 
     if st.button("Run Analysis"):
         with st.spinner("Analyzing retinal patterns..."):
             img = preprocess_image(image)
             img_input = np.expand_dims(img, axis=0)
-
+ 
             interpreter.set_tensor(input_details[0]['index'], img_input)
             interpreter.invoke()
             prediction = interpreter.get_tensor(output_details[0]['index'])
-
+ 
             predicted_grade = int(np.argmax(prediction))
             confidence = float(prediction[0][predicted_grade] * 100)
             grade_name, badge, description, color = grade_info[predicted_grade]
-
+ 
             st.markdown(f"""
             <div class="result-card bg-{predicted_grade}">
                 <div style="display:flex; align-items:center; gap:0.8rem; margin-bottom:0.6rem;">
@@ -240,7 +238,7 @@ if uploaded_file is not None:
                 </div>
             </div>
             """, unsafe_allow_html=True)
-
+ 
             st.markdown(f"""
             <div class="stats-row">
                 <div class="stat-box"><div class="stat-val">{confidence:.1f}%</div><div class="stat-lbl">Confidence</div></div>
@@ -248,7 +246,7 @@ if uploaded_file is not None:
                 <div class="stat-box"><div class="stat-val">{grade_name}</div><div class="stat-lbl">Classification</div></div>
             </div>
             """, unsafe_allow_html=True)
-
+ 
             st.markdown("""
             <div style="margin-top:1.5rem; padding:1rem; background:rgba(255,255,255,0.03); border-radius:12px; border-left:3px solid #0077b6;">
                 <div style="font-size:0.78rem; color:#7a92a8; line-height:1.6;">
@@ -258,7 +256,7 @@ if uploaded_file is not None:
                 </div>
             </div>
             """, unsafe_allow_html=True)
-
+ 
 # Footer
 st.markdown("""
 <div class="footer">
@@ -266,3 +264,4 @@ st.markdown("""
     <span style="color:#1e3448;">For educational and screening purposes only</span>
 </div>
 """, unsafe_allow_html=True)
+    
