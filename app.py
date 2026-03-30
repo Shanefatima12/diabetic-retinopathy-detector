@@ -1,7 +1,7 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
-import tflite_runtime.interpreter as tflite
+import tensorflow as tf
 
 # ======================
 # PAGE CONFIG
@@ -20,7 +20,7 @@ MODEL_PATH = "dr_model.tflite"
 @st.cache_resource
 def load_model():
     try:
-        interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+        interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
         interpreter.allocate_tensors()
         return interpreter
     except Exception as e:
@@ -36,7 +36,7 @@ input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
 # ======================
-# PREPROCESS IMAGE
+# PREPROCESS
 # ======================
 def preprocess_image(image):
     img = image.convert("RGB")
@@ -48,9 +48,9 @@ def preprocess_image(image):
 # LABELS
 # ======================
 grade_info = {
-    0: ("No DR", "OK", "Healthy eye. No signs detected."),
+    0: ("No DR", "OK", "Healthy eye."),
     1: ("Mild DR", "MILD", "Minor changes observed."),
-    2: ("Moderate DR", "MOD", "Moderate retinal damage."),
+    2: ("Moderate DR", "MOD", "Moderate damage."),
     3: ("Severe DR", "SEV", "Severe damage detected."),
     4: ("Proliferative DR", "URGENT", "Immediate attention required."),
 }
@@ -65,29 +65,24 @@ uploaded_file = st.file_uploader("Upload fundus image", type=["jpg", "jpeg", "pn
 
 if uploaded_file:
     image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_container_width=True)
+    st.image(image, use_container_width=True)
 
     if st.button("Run Analysis"):
         with st.spinner("Analyzing..."):
 
             img = preprocess_image(image)
-
-            # IMPORTANT FIX: add batch + correct shape
             img_input = np.expand_dims(img, axis=0).astype(np.float32)
-
-            expected_shape = input_details[0]['shape']
-            img_input = np.reshape(img_input, expected_shape)
 
             interpreter.set_tensor(input_details[0]['index'], img_input)
             interpreter.invoke()
 
             prediction = interpreter.get_tensor(output_details[0]['index'])
 
-            predicted_grade = int(np.argmax(prediction))
-            confidence = float(prediction[0][predicted_grade] * 100)
+            predicted_class = int(np.argmax(prediction))
+            confidence = float(prediction[0][predicted_class] * 100)
 
-            name, badge, desc = grade_info[predicted_grade]
+            name, badge, desc = grade_info[predicted_class]
 
-            st.success(f"{name}")
+            st.success(name)
             st.write(f"Confidence: {confidence:.2f}%")
             st.write(desc)
