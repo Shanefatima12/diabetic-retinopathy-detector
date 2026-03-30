@@ -2,22 +2,8 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 import os
-import subprocess
-
-def install(package):
-    subprocess.run(["pip", "install", package], check=True)
-
-try:
-    import gdown
-except ImportError:
-    install("gdown==4.7.3")
-    import gdown
-
-try:
-    import tensorflow as tf
-except ImportError:
-    install("tensorflow-cpu==2.14.0")
-    import tensorflow as tf
+import urllib.request
+import tensorflow as tf
 
 # Page Config MUST BE FIRST
 st.set_page_config(
@@ -26,12 +12,12 @@ st.set_page_config(
     layout="centered"
 )
 
-# Download Model from Google Drive
+# Download Model using urllib (no extra package needed)
 MODEL_PATH = 'dr_model.tflite'
 if not os.path.exists(MODEL_PATH):
     st.info("Downloading model... please wait!")
-    url = 'https://drive.google.com/uc?id=1TpfFbxy0UFbHdAiuNODYqv9KrCk9xCZw'
-    gdown.download(url, MODEL_PATH, quiet=False)
+    url = 'https://drive.google.com/uc?export=download&id=1TpfFbxy0UFbHdAiuNODYqv9KrCk9xCZw'
+    urllib.request.urlretrieve(url, MODEL_PATH)
 
 # Custom CSS
 st.markdown("""
@@ -177,11 +163,7 @@ st.markdown("""
 # Load TFLite Model
 @st.cache_resource
 def load_model():
-    try:
-        import tflite_runtime.interpreter as tflite
-        interpreter = tflite.Interpreter(model_path=MODEL_PATH)
-    except ImportError:
-        interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
+    interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
     interpreter.allocate_tensors()
     return interpreter
 
