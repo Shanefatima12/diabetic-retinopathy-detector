@@ -155,21 +155,20 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Load TFLite Model
-@st.cache_resource
+@@st.cache_resource
 def load_model():
     import subprocess
-    subprocess.run([
-        "pip", "install",
-        "https://github.com/google-coral/pycoral/releases/download/v2.0.0/tflite_runtime-2.5.0.post1-cp39-cp39-linux_x86_64.whl"
-    ], capture_output=True)
+    # Install the correct wheel for Linux x86_64
+    wheel_url = "https://github.com/prepareforexams/tflite/releases/download/v1/tflite_runtime-2.14.0-cp311-cp311-linux_x86_64.whl"
+    subprocess.run(["pip", "install", wheel_url], capture_output=True)
     try:
         import tflite_runtime.interpreter as tflite
         interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+        interpreter.allocate_tensors()
+        return interpreter
     except Exception as e:
         st.error(f"Could not load model: {e}")
         st.stop()
-    interpreter.allocate_tensors()
-    return interpreter
 
 interpreter = load_model()
 input_details = interpreter.get_input_details()
