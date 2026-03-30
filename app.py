@@ -3,6 +3,8 @@ import numpy as np
 from PIL import Image
 import os
 import urllib.request
+import subprocess
+subprocess.run(["pip", "install", "tensorflow-cpu==2.14.0"], check=False)
 import tensorflow as tf
 
 # Page Config MUST BE FIRST
