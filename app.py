@@ -158,21 +158,13 @@ st.markdown("""
 @st.cache_resource
 def load_model():
     try:
-        import tensorflow as tf
-        interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
+        import tflite_runtime.interpreter as tflite
+        interpreter = tflite.Interpreter(model_path=MODEL_PATH)
         interpreter.allocate_tensors()
         return interpreter
     except Exception as e:
         st.error(f"Could not load model: {e}")
         return None
-
-interpreter = load_model()
-
-if interpreter is not None:
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
-else:
-    st.stop()
 # Upload Section
 st.markdown('<div class="upload-card">', unsafe_allow_html=True)
 uploaded_file = st.file_uploader("Drop your fundus eye image here", type=["jpg","jpeg","png"])
