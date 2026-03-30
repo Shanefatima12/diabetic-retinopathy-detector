@@ -2,10 +2,6 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 import os
-import urllib.request
-import subprocess
-subprocess.run(["pip", "install", "tensorflow-cpu==2.14.0"], check=False)
-import tensorflow as tf
 
 # Page Config MUST BE FIRST
 st.set_page_config(
@@ -14,12 +10,8 @@ st.set_page_config(
     layout="centered"
 )
 
-# Download Model using urllib (no extra package needed)
+# Load model from repo directly
 MODEL_PATH = 'dr_model.tflite'
-if not os.path.exists(MODEL_PATH):
-    st.info("Downloading model... please wait!")
-    url = 'https://drive.google.com/uc?export=download&id=1TpfFbxy0UFbHdAiuNODYqv9KrCk9xCZw'
-    urllib.request.urlretrieve(url, MODEL_PATH)
 
 # Custom CSS
 st.markdown("""
@@ -162,10 +154,19 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Load TFLite Model
+# Load TFLite Model using only built-in tflite interpreter
 @st.cache_resource
 def load_model():
-    interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
+    try:
+        import tflite_runtime.interpreter as tflite
+        interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+    except Exception:
+        try:
+            import tensorflow as tf
+            interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
+        except Exception as e:
+            st.error(f"Could not load model: {e}")
+            st.stop()
     interpreter.allocate_tensors()
     return interpreter
 
