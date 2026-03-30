@@ -158,11 +158,13 @@ st.markdown("""
 @st.cache_resource
 def load_model():
     import subprocess
-    subprocess.run(["pip", "install", "ai-edge-litert==1.0.1"],
-                   capture_output=True)
+    subprocess.run([
+        "pip", "install",
+        "https://github.com/google-coral/pycoral/releases/download/v2.0.0/tflite_runtime-2.5.0.post1-cp39-cp39-linux_x86_64.whl"
+    ], capture_output=True)
     try:
-        from ai_edge_litert.interpreter import Interpreter
-        interpreter = Interpreter(model_path=MODEL_PATH)
+        import tflite_runtime.interpreter as tflite
+        interpreter = tflite.Interpreter(model_path=MODEL_PATH)
     except Exception as e:
         st.error(f"Could not load model: {e}")
         st.stop()
