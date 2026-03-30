@@ -1,13 +1,23 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
-import gdown
 import os
- 
-# Page Config MUST BE FIRST
-st.set_page_config(
-    page_title="DR Vision | Diabetic Retinopathy Detector",
-    page_icon="👁",
+import subprocess
+
+def install(package):
+    subprocess.run(["pip", "install", package], check=True)
+
+try:
+    import gdown
+except ImportError:
+    install("gdown==4.7.3")
+    import gdown
+
+try:
+    import tensorflow as tf
+except ImportError:
+    install("tensorflow-cpu==2.14.0")
+    import tensorflow as tf
     layout="centered"
 )
  
