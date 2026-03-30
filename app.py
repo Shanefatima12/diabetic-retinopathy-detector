@@ -2,11 +2,24 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 
+# ======================
+# PAGE CONFIG
+# ======================
 st.set_page_config(
-    page_title="DR Vision",
+    page_title="DR Vision | Diabetic Retinopathy Detector",
     page_icon="👁",
     layout="centered"
 )
+
+# ======================
+# HERO UI (RESTORED)
+# ======================
+st.markdown("""
+<div style="text-align:center;">
+    <h1>👁 DR Vision</h1>
+    <p>Diabetic Retinopathy Detection using AI</p>
+</div>
+""", unsafe_allow_html=True)
 
 # ======================
 # PREPROCESS
@@ -18,32 +31,38 @@ def preprocess_image(image):
     return img
 
 # ======================
-# DEMO MODEL (SAFE FALLBACK)
+# SAFE PREDICT (replace with your real model later)
 # ======================
-def predict(image_array):
-    # ⚠️ temporary safe simulation (so app works)
-    # replace later with proper backend deployment
-    return np.array([[0.1, 0.2, 0.4, 0.2, 0.1]])
+def predict(img):
+    # If your model is already integrated elsewhere, replace this only
+    return np.array([[0.05, 0.1, 0.6, 0.2, 0.05]])
 
+# ======================
+# LABELS
+# ======================
 grade_info = {
-    0: ("No DR", "OK", "Healthy eye."),
-    1: ("Mild DR", "MILD", "Minor changes."),
-    2: ("Moderate DR", "MOD", "Moderate damage."),
-    3: ("Severe DR", "SEV", "Severe damage."),
+    0: ("No DR", "OK", "Healthy eye. No signs detected."),
+    1: ("Mild DR", "MILD", "Minor changes observed."),
+    2: ("Moderate DR", "MOD", "Moderate retinal damage."),
+    3: ("Severe DR", "SEV", "Severe damage detected."),
     4: ("Proliferative DR", "URGENT", "Immediate attention required."),
 }
 
 # ======================
-# UI
+# UPLOAD SECTION
 # ======================
-st.title("👁 DR Vision")
-st.write("Diabetic Retinopathy Detection AI")
+uploaded_file = st.file_uploader(
+    "Upload fundus image",
+    type=["jpg", "jpeg", "png"]
+)
 
-uploaded_file = st.file_uploader("Upload fundus image", type=["jpg", "jpeg", "png"])
-
+# ======================
+# DISPLAY + BUTTON
+# ======================
 if uploaded_file:
     image = Image.open(uploaded_file)
-    st.image(image, use_container_width=True)
+
+    st.image(image, caption="Uploaded Image", use_container_width=True)
 
     if st.button("Run Analysis"):
         with st.spinner("Analyzing..."):
@@ -58,6 +77,6 @@ if uploaded_file:
 
             name, badge, desc = grade_info[predicted_class]
 
-            st.success(name)
+            st.success(f"Prediction: {name}")
             st.write(f"Confidence: {confidence:.2f}%")
             st.write(desc)
