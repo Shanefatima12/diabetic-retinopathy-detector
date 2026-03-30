@@ -154,19 +154,18 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Load TFLite Model using only built-in tflite interpreter
+# Load TFLite Model
 @st.cache_resource
 def load_model():
+    import subprocess
+    subprocess.run(["pip", "install", "ai-edge-litert==1.0.1"],
+                   capture_output=True)
     try:
-        import tflite_runtime.interpreter as tflite
-        interpreter = tflite.Interpreter(model_path=MODEL_PATH)
-    except Exception:
-        try:
-            import tensorflow as tf
-            interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
-        except Exception as e:
-            st.error(f"Could not load model: {e}")
-            st.stop()
+        from ai_edge_litert.interpreter import Interpreter
+        interpreter = Interpreter(model_path=MODEL_PATH)
+    except Exception as e:
+        st.error(f"Could not load model: {e}")
+        st.stop()
     interpreter.allocate_tensors()
     return interpreter
 
@@ -174,7 +173,6 @@ interpreter = load_model()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 st.success("Model ready - Upload an image to begin analysis")
-
 # Preprocess using Pillow only - no cv2
 def preprocess_image(image):
     img = image.convert("RGB")
