@@ -155,7 +155,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Load TFLite Model
-@@st.cache_resource
+@st.cache_resource
 def load_model():
     import subprocess
     # Install the correct wheel for Linux x86_64
