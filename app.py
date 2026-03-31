@@ -166,28 +166,11 @@ def load_model():
                 quiet=False
             )
         except Exception as e:
-            st.error(f"Model download failed: {e}")
+            st.error(f"Download failed: {e}")
             return None
     try:
-        import tflite_runtime.interpreter as tflite
-        interpreter = tflite.Interpreter(model_path=MODEL_PATH)
-        interpreter.allocate_tensors()
-        return interpreter
-    except Exception:
-        pass
-    try:
-        import tensorflow as tf
-        interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
-        interpreter.allocate_tensors()
-        return interpreter
-    except Exception:
-        pass
-    try:
-        import subprocess
-        import sys
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "tflite-runtime"])
-        import tflite_runtime.interpreter as tflite
-        interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+        from ai_edge_litert.interpreter import Interpreter
+        interpreter = Interpreter(model_path=MODEL_PATH)
         interpreter.allocate_tensors()
         return interpreter
     except Exception as e:
@@ -200,9 +183,7 @@ if interpreter is not None:
     output_details = interpreter.get_output_details()
     st.success("Model ready - Upload an image to begin analysis")
 else:
-    st.error("Model failed to load!")
     st.stop()
-
 # Preprocess
 def preprocess_image(image):
     img = image.convert("RGB")
