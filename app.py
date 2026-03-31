@@ -3,14 +3,17 @@ import numpy as np
 from PIL import Image
 import os
 
-# Page Config
+# Page Config MUST BE FIRST
 st.set_page_config(
     page_title="DR Vision | Diabetic Retinopathy Detector",
     page_icon="👁",
     layout="centered"
 )
 
-# CSS
+# Load model from repo directly
+MODEL_PATH = 'dr_model.tflite'
+
+# Custom CSS
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
@@ -151,38 +154,36 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Load Model
-MODEL_PATH = 'dr_model.tflite'
-
+# Load TFLite Model using only built-in tflite interpreter
 @st.cache_resource
 def load_model():
-    if not os.path.exists(MODEL_PATH):
-        import gdown
-        gdown.download(
-            'https://drive.google.com/uc?id=1TpfFbxy0UFbHdAiuNODYqv9KrCk9xCZw',
-            MODEL_PATH,
-            quiet=False
-        )
-    import tflite_runtime.interpreter as tflite
-    interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+    try:
+        import tflite_runtime.interpreter as tflite
+        interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+    except Exception:
+        try:
+            import tensorflow as tf
+            interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
+        except Exception as e:
+            st.error(f"Could not load model: {e}")
+            st.stop()
     interpreter.allocate_tensors()
     return interpreter
 
 interpreter = load_model()
-if interpreter is not None:
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
-    st.success("Model ready - Upload an image to begin analysis")
-else:
-    st.stop()
-# Preprocess
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+st.success("Model ready - Upload an image to begin analysis")
+
+# Preprocess using Pillow only - no cv2
 def preprocess_image(image):
     img = image.convert("RGB")
     img = img.resize((224, 224))
-    img = np.array(img).astype(np.float32) / 255.0
+    img = np.array(img).astype(np.float32)
+    img = img / 255.0
     return img
 
-# Upload
+# Upload Section
 st.markdown('<div class="upload-card">', unsafe_allow_html=True)
 uploaded_file = st.file_uploader("Drop your fundus eye image here", type=["jpg","jpeg","png"])
 st.markdown('</div>', unsafe_allow_html=True)
@@ -192,7 +193,7 @@ if uploaded_file is not None:
     image = Image.open(uploaded_file)
     col1, col2, col3 = st.columns([1,3,1])
     with col2:
-        st.image(image, caption="Uploaded Fundus Image", use_container_width=True)
+        st.image(image, caption="Uploaded Fundus Image", use_column_width=True)
 
     if st.button("Run Analysis"):
         with st.spinner("Analyzing retinal patterns..."):
