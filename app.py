@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
-import gdown
 import os
 
 # Page Config
@@ -10,16 +9,6 @@ st.set_page_config(
     page_icon="👁",
     layout="centered"
 )
-
-# Download Model
-MODEL_PATH = 'dr_model.tflite'
-if not os.path.exists(MODEL_PATH):
-    st.info("Loading model... please wait!")
-    gdown.download(
-        'https://drive.google.com/uc?id=1TpfFbxy0UFbHdAiuNODYqv9KrCk9xCZw',
-        MODEL_PATH,
-        quiet=False
-    )
 
 # CSS
 st.markdown("""
@@ -163,8 +152,22 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Load Model
+MODEL_PATH = 'dr_model.tflite'
+
 @st.cache_resource
 def load_model():
+    if not os.path.exists(MODEL_PATH):
+        try:
+            import gdown
+            st.info("Downloading model...")
+            gdown.download(
+                'https://drive.google.com/uc?id=1TpfFbxy0UFbHdAiuNODYqv9KrCk9xCZw',
+                MODEL_PATH,
+                quiet=False
+            )
+        except Exception as e:
+            st.error(f"Model download failed: {e}")
+            return None
     try:
         import tflite_runtime.interpreter as tflite
         interpreter = tflite.Interpreter(model_path=MODEL_PATH)
@@ -175,9 +178,11 @@ def load_model():
     return interpreter
 
 interpreter = load_model()
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
-st.success("Model ready - Upload an image to begin analysis")
+
+if interpreter is not None:
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    st.success("Model ready - Upload an image to begin analysis")
 
 # Preprocess
 def preprocess_image(image):
