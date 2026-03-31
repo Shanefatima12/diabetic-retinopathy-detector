@@ -3,4 +3,3 @@ numpy
 pillow
 gdown
 opencv-python-headless
-tflite-runtime
