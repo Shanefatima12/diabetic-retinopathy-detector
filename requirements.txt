@@ -1,0 +1,6 @@
+streamlit
+numpy
+pillow
+gdown
+opencv-python-headless
+tflite-runtime==2.14.0
