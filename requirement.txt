@@ -2,5 +2,5 @@ streamlit
 numpy
 pillow
 gdown
-ai-edge-litert
+tflite-runtime==2.14.0
 opencv-python-headless
