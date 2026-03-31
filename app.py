@@ -171,18 +171,37 @@ def load_model():
     try:
         import tflite_runtime.interpreter as tflite
         interpreter = tflite.Interpreter(model_path=MODEL_PATH)
-    except ImportError:
+        interpreter.allocate_tensors()
+        return interpreter
+    except Exception:
+        pass
+    try:
         import tensorflow as tf
         interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
-    interpreter.allocate_tensors()
-    return interpreter
+        interpreter.allocate_tensors()
+        return interpreter
+    except Exception:
+        pass
+    try:
+        import subprocess
+        import sys
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "tflite-runtime"])
+        import tflite_runtime.interpreter as tflite
+        interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+        interpreter.allocate_tensors()
+        return interpreter
+    except Exception as e:
+        st.error(f"Could not load model: {e}")
+        return None
 
 interpreter = load_model()
-
 if interpreter is not None:
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
     st.success("Model ready - Upload an image to begin analysis")
+else:
+    st.error("Model failed to load!")
+    st.stop()
 
 # Preprocess
 def preprocess_image(image):
