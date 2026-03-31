@@ -157,25 +157,16 @@ MODEL_PATH = 'dr_model.tflite'
 @st.cache_resource
 def load_model():
     if not os.path.exists(MODEL_PATH):
-        try:
-            import gdown
-            st.info("Downloading model...")
-            gdown.download(
-                'https://drive.google.com/uc?id=1TpfFbxy0UFbHdAiuNODYqv9KrCk9xCZw',
-                MODEL_PATH,
-                quiet=False
-            )
-        except Exception as e:
-            st.error(f"Download failed: {e}")
-            return None
-    try:
-        from ai_edge_litert.interpreter import Interpreter
-        interpreter = Interpreter(model_path=MODEL_PATH)
-        interpreter.allocate_tensors()
-        return interpreter
-    except Exception as e:
-        st.error(f"Could not load model: {e}")
-        return None
+        import gdown
+        gdown.download(
+            'https://drive.google.com/uc?id=1TpfFbxy0UFbHdAiuNODYqv9KrCk9xCZw',
+            MODEL_PATH,
+            quiet=False
+        )
+    import tflite_runtime.interpreter as tflite
+    interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+    interpreter.allocate_tensors()
+    return interpreter
 
 interpreter = load_model()
 if interpreter is not None:
