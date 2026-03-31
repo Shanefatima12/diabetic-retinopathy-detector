@@ -157,23 +157,14 @@ st.markdown("""
 # Load TFLite Model using only built-in tflite interpreter
 @st.cache_resource
 def load_model():
-    import subprocess
-    # Install the correct wheel for Linux x86_64
-    wheel_url = "https://github.com/prepareforexams/tflite/releases/download/v1/tflite_runtime-2.14.0-cp311-cp311-linux_x86_64.whl"
-    subprocess.run(["pip", "install", wheel_url], capture_output=True)
     try:
-        import tflite_runtime.interpreter as tflite
-        interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+        import tensorflow as tf
+        interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
         interpreter.allocate_tensors()
         return interpreter
     except Exception as e:
         st.error(f"Could not load model: {e}")
         st.stop()
-
-interpreter = load_model()
-input_details = interpreter.get_input_details()
-output_details = interpreter.get_output_details()
-st.success("Model ready - Upload an image to begin analysis")
 
 # Preprocess using Pillow only - no cv2
 def preprocess_image(image):
