@@ -1,2 +1,5 @@
 [server]
 python_version = "3.11"
+
+[global]
+developmentMode = false
