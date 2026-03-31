@@ -165,6 +165,10 @@ def load_model():
     except Exception as e:
         st.error(f"Could not load model: {e}")
         st.stop()
+        
+interpreter = load_model()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
 
 # Preprocess using Pillow only - no cv2
 def preprocess_image(image):
