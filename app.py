@@ -157,30 +157,23 @@ st.markdown("""
 # Load TFLite Model using only built-in tflite interpreter
 @st.cache_resource
 def load_model():
+    import subprocess
+    # Install the correct wheel for Linux x86_64
+    wheel_url = "https://github.com/prepareforexams/tflite/releases/download/v1/tflite_runtime-2.14.0-cp311-cp311-linux_x86_64.whl"
+    subprocess.run(["pip", "install", wheel_url], capture_output=True)
     try:
-        import ctypes
-        import urllib.request
-        
-        # Download tflite runtime wheel and install
-        import subprocess
-        result = subprocess.run(
-            ["pip", "install", "--only-binary=:all:", "tflite-runtime==2.14.0"],
-            capture_output=True, text=True
-        )
         import tflite_runtime.interpreter as tflite
         interpreter = tflite.Interpreter(model_path=MODEL_PATH)
-    except Exception as e1:
-        try:
-            import subprocess
-            subprocess.run(["pip", "install", "tensorflow-cpu==2.14.0"], 
-                         capture_output=True)
-            import tensorflow as tf
-            interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
-        except Exception as e2:
-            st.error(f"Model load failed: {e2}")
-            st.stop()
-    interpreter.allocate_tensors()
-    return interpreter
+        interpreter.allocate_tensors()
+        return interpreter
+    except Exception as e:
+        st.error(f"Could not load model: {e}")
+        st.stop()
+
+interpreter = load_model()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+st.success("Model ready - Upload an image to begin analysis")
 
 # Preprocess using Pillow only - no cv2
 def preprocess_image(image):
